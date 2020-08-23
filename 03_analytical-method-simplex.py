@@ -121,7 +121,7 @@ class ModelLP:
         m = np.hstack([x, z.reshape(len(x), 1)])
         matrix_df = pd.DataFrame(m)
         print(matrix_df)
-        print(np.hstack([x, z.reshape(len(x), 1)]))
+        #print(np.hstack([x, z.reshape(len(x), 1)]))
         
         
     def solve(self):
