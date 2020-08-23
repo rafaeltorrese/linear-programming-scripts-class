@@ -3,7 +3,7 @@
 import re
 from itertools import combinations
 import numpy as np
-
+import pandas as pd
 
 
 class Constraint:
@@ -118,6 +118,9 @@ class ModelLP:
             zvalues.append(z[0])
         z = np.array(zvalues)
         x = np.array(solutions)
+        m = np.hstack([x, z.reshape(len(x), 1)])
+        matrix_df = pd.DataFrame(m)
+        print(matrix_df)
         print(np.hstack([x, z.reshape(len(x), 1)]))
         
         
@@ -173,18 +176,6 @@ if __name__ == "__main__":
     model.setObjective("12 8 14 10")
     model.name
     model.standard_form()
+    model.zvalues()
 
-    model2 = ModelLP("Example 2.1-06")
-    model2.addConstr("2 3 2 <= 440")
-    model2.addConstr("4 0 3 <= 470")
-    model2.addConstr("2 5 0 <= 430" )
-    model2.setObjective("4 3 6")
-    model2.standard_form()
 
-    model3 = ModelLP("Example 2.6-02")
-    model3.setObjective("45 40 85 65")
-    model3.addConstr("3 4 8 6 >= 800")
-    model3.addConstr("2 2 7  5 >= 200")
-    model3.addConstr("6 4 7 4 >= 700")
-    model3.standard_form()
-    model3.zvalues()
