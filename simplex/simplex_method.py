@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # _*_ coding: utf8
 
+from itertools import chain
 import numpy as np
 np.set_printoptions(suppress=True)
 
@@ -44,20 +45,31 @@ def row_operations(A, r, entry, leaving):
         r[i] += factor*r[leaving]
     return A, r
 
+def create_array(data):
+    "Create a matrix as numpy array from string data"
+    if ";" in data:
+        matrix_list = [row.split() for row in data.split(";")]
+        m = len(matrix_list)  # number of constraints
+        n = len(matrix_list[0])  # number of variables
+        matrix = np.array(matrix_list, dtype=np.float).reshape(m, n)
+    else:
+        matrix = np.array(data.strip().split(), dtype=np.float)
+    return matrix
+
 def simplex(M, c, r):
     'Simplex algoritthm'
     # initilization
     M = M.astype(np.float)
     basics = np.zeros(len(r))    
-    status = False
+    optimal = False
     iteration = 0
     while not status:
         # Update
         zj, net, objvalue = update(M, r, c, basics)
         
         # Optimality
-        status = optimality_test(net)
-        if status:
+        optimal = optimality_test(net)
+        if optimal:
             break
             
         
@@ -72,13 +84,17 @@ def simplex(M, c, r):
     
 if __name__ == "__main__"    :
     # Data
-    A = np.array([[-1, 1, 0, 1, 0, 0],
-                  [0, -1, 2, 0, 1, 0], 
-                  [1, 1, 1, 0, 0, 1]])
-    cj = np.array([12, 15, 14, 0, 0, 0])
-    rhs = np.array([0, 0, 100])
+    A = create_array("  1 2 1 ;  1 0 2   ;    1 4 0")
+    cj = create_array("3 2 5")
+    rhs = create_array(" 430 460 420 ")
+    print(rhs)
+    # A = np.array([[-1, 1, 0, 1, 0, 0],
+    #               [0, -1, 2, 0, 1, 0], 
+    #               [1, 1, 1, 0, 0, 1]])
+    # cj = np.array([12, 15, 14, 0, 0, 0])
+    # rhs = np.array([0, 0, 100])
     simplex(A, cj, rhs)
     
     
-    
+    print(list(chain("A B C".split(), "D E".split())))
     
