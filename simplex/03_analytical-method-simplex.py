@@ -51,7 +51,7 @@ class ModelLP:
         print(self._name)
 
     def setObjective(self, obj):
-        self._objective = np.array([float(value) for value in obj.split()])
+        self._objective = np.array(obj.strip().split(), dtype=np.float)
 
     def getObjective(self):
         return self._objective
