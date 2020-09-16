@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # _*_ coding: utf8
 
-from itertools import chain
 import numpy as np
 np.set_printoptions(suppress=True)
 
@@ -12,9 +11,9 @@ def update(A, rhs, cj, basics):
     zvalue = basics.dot(rhs)
     # print(zj, net_evaluation, zvalue, rhs)
     return zj, net_evaluation, zvalue
-    
 
-def optimality_test(net_evaluation): 
+
+def optimality_test(net_evaluation):
     optimal = np.all(net_evaluation <= 0)
     if optimal:
         print("Optimal Solution found")
@@ -59,7 +58,7 @@ def create_array(data):
 def simplex(M, c, r):
     'Simplex algoritthm'
     # initilization
-    basics = np.zeros(len(r))    
+    basics = np.zeros(len(r))
     optimal = False
     iteration = 0
     while not optimal:
@@ -77,20 +76,19 @@ def simplex(M, c, r):
         print(f"Leaving: Row{leaving + 1},  Entry: Column{entry + 1}")
         print(M, "\n")
     print(rhs, objvalue )
-    
-    
-    
+
+
+
 if __name__ == "__main__"    :
     # Data
     # A = create_array("1 2 1 1 0 0; 3 0 2 0 1 0; 1 4 0 0 0 1")
-    # cj = create_array("3 2 5 0 0 0" ) 
+    # cj = create_array("3 2 5 0 0 0" )
     # rhs = create_array("430 460 420")
-    
+
     A = create_array("20 9 6 1 1 0; 10 4 2 1 0 1")
-    cj = create_array("240 104 60 19 0 0" ) 
+    cj = create_array("240 104 60 19 0 0" )
     rhs = create_array("20 10")
     simplex(A, cj, rhs)
-    
-    
-    
-    
+
+
+

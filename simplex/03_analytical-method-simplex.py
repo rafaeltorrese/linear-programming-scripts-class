@@ -8,15 +8,15 @@ import pandas as pd
 
 class Constraint:
     def __init__(self, expression):
-        self.expression = expression
+        self._expression = expression
 
     def vector(self):
         'Construct vector from string constraint'
-        vars, rhs =  re.split("[<>]*=", self.expression)
+        vars, rhs =  re.split("[<>]*=", self._expression)
         return [float(element) for element in vars.split()], float(rhs)
 
     def slack(self):
-        sense = re.findall("[<>]*=", self.expression)[0]
+        sense = re.findall("[<>]*=", self._expression)[0]
         if sense == '<=':
             return 1
         elif sense == '>=':
@@ -24,7 +24,7 @@ class Constraint:
         else:
             return 0
 
-    def row(self, element="body"):
+    def component(self, element="body"):
         if element == "body":
             return self.vector()[0]
         elif element == "slack":
@@ -45,24 +45,31 @@ class ModelLP:
         self.slack_matrix = None
         self.rhs_matrix = None
         self._objective = objective
+        self._sense = ""
 
+        
     @property
     def name(self):
-        print(self._name)
+        print(self._name, self._sense)
 
     def setObjective(self, obj):
-        self._objective = np.array(obj.strip().split(), dtype=np.float)
+        self._sense = obj.strip().split()[0]  # sense in first place of the list
+        coefficients = obj.strip().split()[1: ]
+        self._objective = np.array(coefficients, dtype=np.float)
+
 
     def getObjective(self):
         return self._objective
         
+
     def addConstr(self, expression):
         self._num_const += 1
-        c = Constraint(expression)
-        self._bodycoeff.append(c.row("body"))
-        self._slacks.append(c.row("slack"))
-        self._rhs.append(c.row("rhs"))
+        constr = Constraint(expression)
+        self._bodycoeff.append(constr.component("body"))
+        self._slacks.append(constr.component("slack"))
+        self._rhs.append(constr.component("rhs"))
 
+        
     def get_rhs(self):
         if not self._rhs:
             print("There is no Constraints in the model")
@@ -177,8 +184,9 @@ if __name__ == "__main__":
     model = ModelLP("Example 2.15-2")
     model.addConstr("5 4 2 1 = 100")
     model.addConstr("2 3 8 1  = 75")
-    model.setObjective("12 8 14 10")
-    #model.standard_form()
+    model.setObjective("max 12 8 14 10")
+    model.standard_form()
     #model.zvalues()
+    model.name
 
 
