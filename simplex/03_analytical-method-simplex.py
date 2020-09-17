@@ -102,12 +102,13 @@ class ModelLP:
         if indx.size > 0:  # if thera are zero-values slackas variable then remove zero-value slacks from slack matrix
             slacks = np.delete(slacks, indx, axis=1)    
         self.body_matrix, self.slack_matrix =  body, slacks  # create body matrix and slack matrix
-        return np.hstack([self.body_matrix, self.slack_matrix])  # return matrix
+        if self.slack_matrix.size > 0:  # if slack matrix does not exists
+            return np.hstack([self.body_matrix, self.slack_matrix])  # return matrix
+        return self.body_matrix
 
-    # def standard_form(self):
-    #     self.set_matrix_form()  # initialize body matrix and slack matrix
-    #     matrix = np.hstack([self.body_matrix, self.slack_matrix])
-    #     print(matrix)
+    @property
+    def standard_form(self):
+        print(self.set_matrix_form())
         
 
         
@@ -115,7 +116,7 @@ class ModelLP:
         'Matrix generator from original coefficient matrix'
         feasibles = []
         infeasibles = []
-        if self.slack_matrix:  # zero-values slack variables
+        if self.slack_matrix != None:  # zero-values slack variables
             objective = np.concatenate([self._objective, np.zeros_like(self._slacks)])  # create objective function with slacks variables
         else:
             objective = self._objective
@@ -136,43 +137,16 @@ class ModelLP:
                     infeasibles.append(solution)
             except np.linalg.LinAlgError:
                 print("Singular Matrix")
-        feasibles = np.array(feasibles)
-        infeasibles = np.array(infeasibles)
-        print(feasibles)
-        print()
-        print(infeasibles)
-            
-            
-
-
-    def get_basics(self):
-        'Solve equations'
-        b = self.get_rhs()
-        matrices = self.get_submatrices()
-        print( list((np.linalg.solve(mat, b) for mat in matrices)))  # Basic solutions
-
-    
-    
-    def zvalues(self):
-        objective = np.concatenate([self._objective, np.zeros_like(self._slacks)])  # create objective function with slacks variables
-        basics = self.get_basics()  # generator. Solutions
-        positions = combinations(range(objective.size), self._num_const)
-        zvalues = []
-        solutions = []
-        for basic,position in zip(basics, positions):
-            solution = np.zeros((objective.size,1))  # column vector
-            solution[list(position)] = basic  # set basic solution in positions
-            solutions.append(solution.flatten())
-            z = objective.dot(solution)
-            zvalues.append(z[0])
-        z = np.array(zvalues)
-        x = np.array(solutions)
-        m = np.hstack([x, z.reshape(len(x), 1)])
-        matrix_df = pd.DataFrame(m)
-        print(matrix_df)
-        #print(np.hstack([x, z.reshape(len(x), 1)]))
+        return  np.array(feasibles),  np.array(infeasibles)
         
-        
+                
+    def best_solution(self):
+        feasibles, infeasibles = self.get_solutions()
+        zvalues = feasibles[:, -1]
+        best_vector = feasibles[np.argmax(zvalues)]
+        for i,element in enumerate(best_vector[:-1], 1):
+            print(f"x{i}: {element: 0.4f}")
+        print(f"Z = {best_vector[-1]:0.4f}")
         
     def show_constr(self):
         print(self._bodycoeff)
@@ -214,8 +188,8 @@ class LP:
 if __name__ == "__main__":
     model = ModelLP("Example 2.15-3")
     model.load_instance("5 4 2 1 = 100; 2 3 8 1  = 75; max 12 8 14 10")
-    model.name
-    model.get_solutions()
+    model.best_solution()
+    
     #model2 = ModelLP("Example 2.17-1")
     #model2.load_instance("min 12 20; 6 8 >= 100; 7 12 >= 120")
     #model2.standard_form()
