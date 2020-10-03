@@ -57,12 +57,12 @@ class ModelLP:
         self._sense = obj_components[0]  # sense in first place of the list (max or min)
         coefficients = obj_components[1: ]  # only numbers (objective function coefficients)
         self._objective = np.array(coefficients, dtype=np.float)
-        if self._num_const > 0:
-            self._num_const -= 1
+        # if self._num_const > 0:
+        #     self._num_const -= 1
         
 
     def load_instance(self, string_expressions):
-        'Strings with instance semi colon separated'
+        'Strings with an instance separated by semi-colon' 
         expression_list = string_expressions.split(";")
         for expression in expression_list:
             self.addExpr(expression)
@@ -73,7 +73,7 @@ class ModelLP:
         
 
     def addExpr(self, expression):
-        self._num_const += 1
+        # self._num_const += 1
         is_objective = re.match("^m(ax|in)", expression.lstrip())  # match min or max 
         if is_objective:
             self._setObjective(expression.strip())
@@ -82,6 +82,7 @@ class ModelLP:
             self._bodycoeff.append(constr.component("body"))
             self._slacks.append(constr.component("slack")) # add -1,1 or 0 to list _rhs
             self._rhs.append(constr.component("rhs"))  #  add rhs to _rhs list
+            self._num_const += 1
 
         
     def get_rhs(self):
@@ -91,9 +92,6 @@ class ModelLP:
         self.rhs_matrix = np.array(self._rhs)
         return self.rhs_matrix
 
-    @property
-    def num_slacks(self):
-        print((np.array(self._slacks) > 0).sum())
     
     def set_matrix_form(self):
         body = np.array(self._bodycoeff)
@@ -106,26 +104,42 @@ class ModelLP:
             return np.hstack([self.body_matrix, self.slack_matrix])  # return matrix
         return self.body_matrix
 
+    
+    @property
+    def num_slacks(self):
+        return len(self._slacks)
+    
+                
+    def show_constr(self):
+        print(self._bodycoeff)
+
+    @property
+    def num_constr(self):
+        return print(f"Number Constraints: {self._num_const}")
+
+
+        
+class AnalyticalMethod(ModelLP):
+    def __init__(self, name):
+        super().__init__(name)
+    
     @property
     def standard_form(self):
         print(self.set_matrix_form())
-        
-
-        
+    
     def get_solutions(self):
         'Matrix generator from original coefficient matrix'
         feasibles = []
         infeasibles = []
-        if self.slack_matrix != None:  # zero-values slack variables
-            objective = np.concatenate([self._objective, np.zeros_like(self._slacks)])  # create objective function with slacks variables
-        else:
-            objective = self._objective
+        objective = self._objective
+        if self.slack_matrix.size > 0:  # zero-values slack variables
+            objective = np.concatenate([objective, np.zeros_like(self._slacks)])  # create objective function with slacks variables
         matrix = self.set_matrix_form()  # matrix ensamble ==> body + slacks
         numconstr, numvars = matrix.shape
         assert numconstr == self._num_const, "Number of constraints are different"
         b = self.get_rhs()  # get rhs vector
         for columns in combinations(range(numvars), numconstr):
-            solution = np.zeros(objective.size)
+            solution = np.zeros_like(objective)
             m = matrix[:, [*columns]] # submatrix
             try:
                 basic = np.linalg.solve(m, b)
@@ -147,49 +161,45 @@ class ModelLP:
         for i,element in enumerate(best_vector[:-1], 1):
             print(f"x{i}: {element: 0.4f}")
         print(f"Z = {best_vector[-1]:0.4f}")
-        
-    def show_constr(self):
-        print(self._bodycoeff)
-
-    def num_constr(self):
-        return print(f"Number Constraints: {self._num_const}")
 
 
-        
-        
-class LP:
-    def __init__(self, coefficients, rhs, objcoef):
-        self.A = coefficients
-        self.b = rhs
-        self.c = objcoef
-        
-        
-    def constr_num(self):
-        return A.shape[0]
-
-    def var_num(self):
-        return A.shape[1]
-
-    def submatrices(self):
-        'Matrix generator from original coefficient matrix'
-        return (A[:,[i,j]] for i,j in combinations(range(self.var_num()) , self.constr_num()))
-
-    def invmats(self):
-        mats = self.submatrices()
-        return (np.linalg.inv(matrix) for matrix in mats)
-
-    def basics(self):
-        'Solve equations'
-        inverses = self.invmats()
-        return (Ainv.dot(b) for Ainv in inverses)
-
-
-
-if __name__ == "__main__":
-    model = ModelLP("Example 2.15-3")
-    model.load_instance("5 4 2 1 = 100; 2 3 8 1  = 75; max 12 8 14 10")
-    model.best_solution()
+class Simplex(AnalyticalMethod):
+    def _basics(self):
+        return np.zeros(super().num_slacks)
     
-    #model2 = ModelLP("Example 2.17-1")
-    #model2.load_instance("min 12 20; 6 8 >= 100; 7 12 >= 120")
-    #model2.standard_form()
+    
+    def _objective_func(self):
+        # return super().getObjective()
+        return np.concatenate((super().getObjective() , self._basics()) )
+   
+      
+    def _update(self):
+        rhs = super().get_rhs()
+        A = super().set_matrix_form()
+        basics = self._basics()
+        cj = self._objective_func()
+        zj = basics.dot(A)
+        net_evaluation = cj - zj
+        zvalue = basics.dot(rhs)
+        print(zj, net_evaluation, zvalue)
+        
+        
+if __name__ == "__main__":
+    model = Simplex("Example 2.16-1")
+    model.load_instance("max 3 4; 1 1 <= 450; 2 1 <= 60")
+    model.standard_form
+    model.num_constr
+    model._update()
+    
+
+
+
+    
+    # model = AnalyticalMethod("Example 2.15-3")
+    # model.load_instance("5 4 2 1 = 100; 2 3 8 1  = 75; max 12 8 14 10")
+    # model.standard_form
+    # model.best_solution()
+    
+    # model2 = AnalyticalMethod("Example 2.17-1")
+    # model2.load_instance("min 12 20; 6 8 >= 100; 7 12 >= 120")
+    # model2.standard_form

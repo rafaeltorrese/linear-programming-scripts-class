@@ -9,7 +9,6 @@ def update(A, rhs, cj, basics):
     zj = basics.dot(A)
     net_evaluation = cj - zj
     zvalue = basics.dot(rhs)
-    # print(zj, net_evaluation, zvalue, rhs)
     return zj, net_evaluation, zvalue
 
 
@@ -29,7 +28,7 @@ def feasibility_test(A, rhs, net_evaluation, basics, cj ):
         rhs_zeros = np.where(rhs == 0)  # indexes where rhs is zero
         rhs[rhs_zeros] = 1e-20
     ratios = rhs / A[:, entry]  # dividing by entry column of A
-    index_ratios = np.where(ratios < 0)
+    index_ratios = np.where(ratios < 0)  # negative ratios
     ratios[index_ratios] = np.infty
     leaving = np.argmin(ratios)
     basics[leaving] = cj[entry]  # update basic
