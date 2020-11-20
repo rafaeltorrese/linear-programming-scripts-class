@@ -107,6 +107,7 @@ class ModelLP:
     
     @property
     def num_slacks(self):
+        print(f"Number of Slack Variables {len(self._slacks)}")
         return len(self._slacks)
     
                 
@@ -128,7 +129,7 @@ class AnalyticalMethod(ModelLP):
         print(self.set_matrix_form())
     
     def get_solutions(self):
-        'Matrix generator from original coefficient matrix'
+        'Matrix generator from original coefficients matrix'
         feasibles = []
         infeasibles = []
         objective = self._objective
@@ -189,7 +190,8 @@ if __name__ == "__main__":
     model.load_instance("max 3 4; 1 1 <= 450; 2 1 <= 60")
     model.standard_form
     model.num_constr
-    model._update()
+    model.num_slacks
+    # model._update()
     
 
 

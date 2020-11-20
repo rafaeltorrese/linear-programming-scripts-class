@@ -54,10 +54,28 @@ def create_array(data):
         return np.array([row.split() for row in data.split(";")], dtype=np.float)
     return np.array(data.strip().split(), dtype=np.float)
 
-def simplex(M, c, r):
-    'Simplex algoritthm'
+def simplex(M, c, r, nvars):
+    """ Simplex algoritthm
+
+    Parameters:
+    ------------
+    M: matrix
+        Body matrix
+
+    c: array
+        Coefficients in objective function
+
+    r: array
+        Right-hand side vector
+
+    nvars: int
+        Number of variables (x1, x2, x3, ..., xn)
+
+    """
     # initilization
-    basics = np.zeros(len(r))
+    positions = np.where(c == 0)[0]
+    solution_vector = np.zeros(c.size)  # [0, 0 ,0 , .. , 0]
+    basics = c[nvars: ].astype(float)  # creates a copy
     optimal = False
     iteration = 0
     while not optimal:
@@ -69,12 +87,15 @@ def simplex(M, c, r):
             break
         # Feasibility
         entry, leaving, basics = feasibility_test(M, r, net, basics, c)
+        positions[leaving] = entry
         M, r = row_operations(M, r, entry, leaving)
         iteration += 1
         print(f'Interation: {iteration}')
         print(f"Leaving: Row{leaving + 1},  Entry: Column{entry + 1}")
         print(M, "\n")
-    print(rhs, objvalue )
+    solution_vector[positions] = rhs
+    print( solution_vector)
+    print(objvalue )
 
 
 
@@ -84,10 +105,28 @@ if __name__ == "__main__"    :
     # cj = create_array("3 2 5 0 0 0" )
     # rhs = create_array("430 460 420")
 
-    A = create_array("20 9 6 1 1 0; 10 4 2 1 0 1")
-    cj = create_array("240 104 60 19 0 0" )
-    rhs = create_array("20 10")
-    simplex(A, cj, rhs)
+    # A = create_array("20 9 6 1 1 0; 10 4 2 1 0 1")
+    # cj = create_array("240 104 60 19 0 0" )
+    # rhs = create_array("20 10")
 
+
+    # A = create_array("2 3 2 1 0 0; 4 0 3 0 1 0; 2 5 0 0 0 1")
+    # cj = create_array("4 3 6 0 0 0" )
+    # rhs = create_array("440 470 430")
+
+    # A = create_array("6 4  1 0 0 0;1 2 0 1 0 0;-1 1 0 0 1 0; 0 1 0 0 0 1")
+    # cj = create_array("5 4 0 0 0 0" )
+    # rhs = create_array("24 6 1 2")
+
+    # A = create_array("1 4 1 0 0; 3 1 0 1 0; 1 1 0 0 1")
+    # cj = create_array("2 5 0 0 0" )
+    # rhs = create_array("24 21   9")
+
+    cj = create_array("10 5 7 0 0 0" )
+    A = create_array("1 1 1 1 0 0; 3 1 2 0 1 0; 1 0 0 0 0 1")
+    rhs = create_array("800 1000 150")
+
+
+    simplex(A, cj, rhs, nvars=3)
 
 
