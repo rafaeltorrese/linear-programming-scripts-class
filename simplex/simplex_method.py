@@ -20,12 +20,9 @@ def optimality_test(net_evaluation, sense):
 
 def feasibility_test(A, rhs, net_evaluation, basics, cj , sense):
     entry = np.argmax(sense * net_evaluation)
-    indx_zeros = np.where(A[:,entry] == 0)[0]
-    if bool(indx_zeros.size):  # if there exists zero values in key column
-        A[indx_zeros, entry] = 1e-20
-    if np.any(rhs == 0) and np.any(A[:,entry] < 0):  # degeneracy, if rhs has zero values and entry column has negative values
-        rhs_zeros = np.where(rhs == 0)[0]  # indexes where rhs is zero
-        rhs[rhs_zeros] = 1e-20
+    A[ : , entry] = np.where(A[:,entry] == 0, 1e-20, A[ : , entry]) # if there exists zero values in key column
+    if np.any(A[ : , entry] < 0):  # degeneracy, if rhs has zero values and entry column has negative values
+        rhs = np.where(rhs == 0, 1e-20, rhs)  # indexes where rhs is zero
     ratios = rhs / A[:, entry]  # dividing by entry column of A
     index_ratios = np.where(ratios < 0)[0]  # if there are negative ratios
     ratios[index_ratios] = np.infty  # penalty  negative ratios, this values are not taking into account
@@ -126,18 +123,18 @@ if __name__ == "__main__"    :
     # cj = create_array("2 5 0 0 0" )
     # rhs = create_array("24 21   9")
 
-    # cj = create_array("10 5 7 0 0 0" )
-    # A = create_array("1 1 1 1 0 0; 3 1 2 0 1 0; 1 0 0 0 0 1")
-    # rhs = create_array("800 1000 150")
+    cj = create_array("10 5 7 0 0 0" )
+    A = create_array("1 1 1 1 0 0; 3 1 2 0 1 0; 1 0 0 0 0 1")
+    rhs = create_array("800 1000 150")
 
     # cj = create_array("12 20 0 0 1000 1000" ) 
     # A = create_array("6 8 -1 0 1 0; 7 12 0 -1 0 1")
     # rhs = create_array("100 120")
 
-    cj = create_array("3 -1  0  0 0 -1000" ) 
-    A = create_array("2 1 1 0 0 0; 1 3 0 -1 0 1; 0 1 0 0 1 0")
-    rhs = create_array("2 3 4")
+    # cj = create_array("3 -1  0  0 0 -1000" ) 
+    # A = create_array("2 1 1 0 0 0; 1 3 0 -1 0 1; 0 1 0 0 1 0")
+    # rhs = create_array("2 3 4")
 
-    simplex(A, cj, rhs, nvars=2, direction=1)
+    simplex(A, cj, rhs, nvars=3, direction=1)
 
 
