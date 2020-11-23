@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# _*_ coding: utf8
+# _*_ coding: utf8 _*_
 
 import numpy as np
 np.set_printoptions(precision=4, suppress=True)
@@ -21,7 +21,7 @@ def optimality_test(net_evaluation, sense):
 def feasibility_test(A, rhs, net_evaluation, basics, cj , sense):
     entry = np.argmax(sense * net_evaluation)
     A[ : , entry] = np.where(A[:,entry] == 0, 1e-20, A[ : , entry]) # if there exists zero values in key column
-    if np.any(A[ : , entry] < 0):  # degeneracy, if rhs has zero values and entry column has negative values
+    if np.any(A[ : , entry] < 0):  # if rhs has zero values and entry column has negative values
         rhs = np.where(rhs == 0, 1e-20, rhs)  # indexes where rhs is zero
     ratios = rhs / A[:, entry]  # dividing by entry column of A
     ratios = np.where(ratios < 0, np.infty, ratios)  # # penalty  negative ratios, this values are not taking into account
@@ -85,16 +85,16 @@ def simplex(M, c, r, nvars, direction=1):
             break
         # Feasibility
         entry, leaving, basics = feasibility_test(M, r, net, basics, c, direction)
+        variable_leaving = positions[leaving]   # only for tracking position variable ("x1, x2, ... , etc")
+        positions[leaving] = entry
         M, r = row_operations(M, r, entry, leaving)  # Gauss Jordan
         #
         iteration += 1
-        print(f'Iteration: {iteration}')
-        variable_leaving = positions[leaving]   # only for tracking position variable ("x1, x2, ... , etc")
-        print(f"Leaving: Variable {variable_leaving + 1},  Entering: Variable {entry + 1}")
-        print(M, "\n")
-        positions[leaving] = entry
         solution_vector[positions] = rhs
         solution_vector[variable_leaving] = 0
+        print(f'Iteration: {iteration}')
+        print(f"Leaving: Variable {variable_leaving + 1},  Entering: Variable {entry + 1}")
+        print(M, "\n")
     return A, rhs, objvalue, solution_vector
 
 
@@ -137,14 +137,15 @@ def two_phase(M, c, r, nvars, direction=1):
         entry, leaving, basics = feasibility_test(M, r, net, basics, two_phase_objective, -1)
         M, r = row_operations(M, r, entry, leaving)  # Gauss Jordan
         #
-        iteration += 1
-        print(f'Iteration: {iteration}')
         variable_leaving = positions[leaving]   # only for tracking position variable ("x1, x2, ... , etc")
-        print(f"Leaving: Variable {variable_leaving + 1},  Entering: Variable {entry + 1}")
-        print(M, "\n")
         positions[leaving] = entry
         solution_vector[positions] = r
         solution_vector[variable_leaving] = 0
+        iteration += 1
+        print(f'Iteration: {iteration}')
+        print(f"Leaving: Variable {variable_leaving + 1},  Entering: Variable {entry + 1}")
+        print(M, "\n")
+    #    
     #
     print("Starting Phase II")
     basics = c[positions].astype(float)  # creates a copy
@@ -159,19 +160,19 @@ def two_phase(M, c, r, nvars, direction=1):
             break
         # Feasibility
         entry, leaving, basics = feasibility_test(M, r, net, basics, c, direction)
+        variable_leaving = positions[leaving]   # only for tracking position variable ("x1, x2, ... , etc")
+        positions[leaving] = entry
         M, r = row_operations(M, r, entry, leaving)  # Gauss Jordan
         #
         iteration += 1
-        print(f'Iteration: {iteration}')
-        variable_leaving = positions[leaving]   # only for tracking position variable ("x1, x2, ... , etc")
-        print(f"Leaving: Variable {variable_leaving + 1},  Entering: Variable {entry + 1}")
-        print(M, "\n")
-        positions[leaving] = entry
         solution_vector[positions] = rhs
         solution_vector[variable_leaving] = 0
+        print(f'Iteration: {iteration}')
+        print(f"Leaving: Variable {variable_leaving + 1},  Entering: Variable {entry + 1}")
+        print(M, "\n")
     return A, rhs, objvalue, solution_vector
 
-if __name__ == "__main__"    :
+if __name__ == "__main__":
     # Data
     # cj = create_array("3 2 5 0 0 0" )
     # A = create_array("1 2 1 1 0 0; 3 0 2 0 1 0; 1 4 0 0 0 1")
@@ -218,9 +219,17 @@ if __name__ == "__main__"    :
     # 1 0 0 0 0 0 1 0")
     # rhs = create_array("30 3 12 0 20")
 
-    cj = create_array("3 4 0 0 0 0 -1000 -1000")
-    A = create_array("5 4 1 0 0  0 0 0;3 5 0 1 0 0 0 0;5 4 0 0 -1 0 1 0;8 4 0 0 0 -1 0 1")
-    rhs = create_array("200 150 100 80")
+    # cj = create_array("3 4 0 0 0 0 -1000 -1000")
+    # A = create_array("5 4 1 0 0  0 0 0;3 5 0 1 0 0 0 0;5 4 0 0 -1 0 1 0;8 4 0 0 0 -1 0 1")
+    # rhs = create_array("200 150 100 80")
+
+    # cj = create_array("2  1 0.25 0 0 0 -1000")
+    # A = create_array("4 6 3 1 0 0 0; 3 -6 -4 0 1 0 0; 2 3 -5 0 0 -1 1")
+    # rhs = create_array("8 1 4")
+
+    cj = create_array("5 -4 3 0 0 0 -1000")
+    A = create_array("2 1 -6 0 0 0 1; 6 5 10 0 1 0 0; 8 -3 6 0 0 1 0")
+    rhs = create_array("20 76 50")
     
-    body, solution, zvalue, vector = two_phase(A, cj, rhs, nvars=2, direction=1)
+    body, solution, zvalue, vector = two_phase(A, cj, rhs, nvars=3, direction=1)
 
