@@ -19,12 +19,14 @@ def optimality_test(net_evaluation, sense):
     return optimal
 
 def feasibility_test(A, rhs, net_evaluation, basics, cj , sense):
+    ratios = np.full_like(rhs, np.infty)
+
     entry = np.argmax(sense * net_evaluation)
-    A[ : , entry] = np.where(A[:,entry] == 0, 1e-20, A[ : , entry]) # if there exists zero values in key column
-    if np.any(A[ : , entry] < 0):  # if rhs has zero values and entry column has negative values
-        rhs = np.where(rhs == 0, 1e-20, rhs)  # indexes where rhs is zero
-    ratios = rhs / A[:, entry]  # dividing by entry column of A
-    ratios = np.where(ratios < 0, np.infty, ratios)  # # penalty  negative ratios, this values are not taking into account
+
+    entry_column = A[ : , entry]
+    positive_values = np.where(entry_column > 0)[0] # if there exists zero values in key column
+    ratios[positive_values] = rhs[positive_values] / entry_column[positive_values]
+
     leaving = np.argmin(ratios)
     basics[leaving] = cj[entry]  # update basic
     return entry, leaving, basics
@@ -67,7 +69,7 @@ def simplex(M, c, r, nvars, direction=1):
         Number of variables (x1, x2, x3, ..., xn)
 
     direction: {1,-1}
-        For maximization problems use 1, or -1 in minimization problems instead 
+        For maximization problems use 1, or -1 in minimization problems instead
     """
     # initilization
     positions = np.where(M[ : , nvars:] == 1)[1] + nvars # only positions of columns with values equal to one
@@ -116,7 +118,7 @@ def two_phase(M, c, r, nvars, direction=1):
         Number of variables (x1, x2, x3, ..., xn)
 
     direction: {1,-1}
-        For maximization problems use 1, or -1 in minimization problems instead 
+        For maximization problems use 1, or -1 in minimization problems instead
     """
     # initilization
     two_phase_objective = np.where((c == -1000)|(c == 1000), 1, 0).astype(float)
@@ -145,7 +147,7 @@ def two_phase(M, c, r, nvars, direction=1):
         print(f'Iteration: {iteration}')
         print(f"Leaving: Variable {variable_leaving + 1},  Entering: Variable {entry + 1}")
         print(M, "\n")
-    #    
+    #
     #
     print("Starting Phase II")
     basics = c[positions].astype(float)  # creates a copy
@@ -174,6 +176,8 @@ def two_phase(M, c, r, nvars, direction=1):
 
 if __name__ == "__main__":
     # Data
+
+    # max nvar=3
     # cj = create_array("3 2 5 0 0 0" )
     # A = create_array("1 2 1 1 0 0; 3 0 2 0 1 0; 1 4 0 0 0 1")
     # rhs = create_array("430 460 420")
@@ -201,16 +205,16 @@ if __name__ == "__main__":
     # cj = create_array("2 1 0 0 0 0")
     # A = create_array("1	2 1 0 0 0;1 1 0 1 0 0; 1 -1 0 0 1 0; 1 -2 0	0 0 1")
     # rhs = create_array("10 6 2 1")
-    
-    # cj = create_array("12 20 0 0 1000 1000" ) 
+
+    # cj = create_array("12 20 0 0 1000 1000" )
     # A = create_array("6 8 -1 0 1 0; 7 12 0 -1 0 1")
     # rhs = create_array("100 120")
 
-    # cj = create_array("3 -1  0  0 0 -1000" ) 
+    # cj = create_array("3 -1  0  0 0 -1000" )
     # A = create_array("2 1 1 0 0 0; 1 3 0 -1 0 1; 0 1 0 0 1 0")
     # rhs = create_array("2 3 4")
 
-    # cj = create_array("2 3  0 -1000 0 0 0 0" ) 
+    # cj = create_array("2 3  0 -1000 0 0 0 0" )
     # A = create_array("\
     # 1 1 1 0 0 0 0 0;\
     # 0 1 0 1 0 0 0 -1;\
@@ -227,9 +231,15 @@ if __name__ == "__main__":
     # A = create_array("4 6 3 1 0 0 0; 3 -6 -4 0 1 0 0; 2 3 -5 0 0 -1 1")
     # rhs = create_array("8 1 4")
 
-    cj = create_array("5 -4 3 0 0 0 -1000")
-    A = create_array("2 1 -6 0 0 0 1; 6 5 10 0 1 0 0; 8 -3 6 0 0 1 0")
-    rhs = create_array("20 76 50")
-    
-    body, solution, zvalue, vector = two_phase(A, cj, rhs, nvars=3, direction=1)
+    # # Max nvars=3
+    # cj = create_array("5 -4 3 0 0 0 -1000")
+    # A = create_array("2 1 -6 0 0 0 1; 6 5 10 0 1 0 0; 8 -3 6 0 0 1 0")
+    # rhs = create_array("20 76 50")
+
+    # #max nvar=3
+    A = create_array("1 1 1 1 0 0 0 0 0 0; -1 3 0 0 1 0 0 0 0 0; 1 -3 0 0 0 1 0 0 0 0; 0 2 -1 0 0 0 1 0 0 0; 0 -2 1 0 0 0 0 1 0 0; 0 1 0 0 0 0 0 0 1 0; 1 0 0 0 0 0 0 0 0 1")
+    rhs = create_array("800 0 0 0 0 1000 150")
+    cj = create_array("10 5 7 0 0 0 0 0 0 0")
+
+    body, solution, zvalue, vector = simplex(A, cj, rhs, nvars=3, direction=1)
 

@@ -28,29 +28,36 @@ def simplex(M, coefobj, b, nvars, sense=1):
         Sense of objective function, +1 for maximization problems, -1 for minimization problems
 
     """
+    M = M.astype(float)
     positions_basics = np.where(M[:, nvars: ] == 1)[1] + nvars  # get positions for initial  basic solutions. Only columns with number one
     solution_vector = np.zeros(coefobj.size)
     cb = coefobj[positions_basics].astype(np.float)
     iteration = 0
 
-    # for _ in range(5):
+
+
     while True:
+    # for _ in range(5):
         # update
+
         zj = cb.dot(M)
         profit = coefobj - zj
         zvalue = cb.dot(b)  # solutions is the rhs (right-hand side vector)
 
         # optimality_test
-        print(f"solution: {solution_vector}")
+        # print(f"solution: {solution_vector}")
         if np.all(sense *  profit <= 0):
             print("\nOptimal Solution Found")
             break
 
         # pivot
-        entering_position = np.argmax(sense * profit)
-        entering_column = np.where(M[:, entering_position] == 0, 1e-20, M[:, entering_position])   # elements of entering column
-        ratios = b /  entering_column
-        ratios = np.where((b == 0) | (entering_column < 0), np.infty, ratios)
+        ratios = np.full_like(cb, np.infty)
+        entering_position = np.argmax(sense * profit)  # position of maximum value
+
+        entering_column = M[:, entering_position].astype(float)
+        positive_values = np.where(entering_column > 0)[0]
+        ratios[positive_values] = b[positive_values] / entering_column[positive_values]
+
         leaving_position = ratios.argmin()
         cb[leaving_position] = coefobj[entering_position]  # update basic variable coefficients
 
@@ -64,7 +71,7 @@ def simplex(M, coefobj, b, nvars, sense=1):
             if i == leaving_position:
                 continue
             factor = -M[i, entering_position]
-            M[i, :] += factor * A[leaving_position]
+            M[i, :] += factor * A[leaving_position]  #  M[i, :] = -M[i, entering_position] * A[leaving_position] + M[i, :]
             b[i] += factor * b[leaving_position]  # update rhs row
 
         #
@@ -109,14 +116,23 @@ if __name__ == "__main__":
     # A = create_array("2 1 -6 0 0 1; 6 5 10  1 0 0; 8 -3 6  0 1 0")
     # rhs = create_array("20 76 50")
 
-    cj = create_array("2 3  0 -1000 0 0 0 0" )
-    A = create_array("\
-    1 1 1 0 0 0 0 0;\
-    0 1 0 1 0 0 0 -1;\
-    0 1 0 0 1 0 0 0;\
-    -1 1 0 0 0 1 0 0;\
-    1 0 0 0 0 0 1 0")
-    rhs = create_array("30 3 12 0 20")
+    # cj = create_array("2 3  0 -1000 0 0 0 0" )
+    # A = create_array("\
+    # 1 1 1 0 0 0 0 0;\
+    # 0 1 0 1 0 0 0 -1;\
+    # 0 1 0 0 1 0 0 0;\
+    # -1 1 0 0 0 1 0 0;\
+    # 1 0 0 0 0 0 1 0")
+    # rhs = create_array("30 3 12 0 20")
 
+    # # max nvar=3
+    # cj = create_array("3 2 5 0 0 0" )
+    # A = create_array("1 2 1 1 0 0; 3 0 2 0 1 0; 1 4 0 0 0 1")
+    # rhs = create_array("430 460 420")
 
-    simplex(A, cj, rhs, nvars=2, sense=1)
+    #max nvar=3
+    A = create_array("1 1 1 1 0 0 0 0 0 0; -1 3 0 0 1 0 0 0 0 0; 1 -3 0 0 0 1 0 0 0 0; 0 2 -1 0 0 0 1 0 0 0; 0 -2 1 0 0 0 0 1 0 0; 0 1 0 0 0 0 0 0 1 0; 1 0 0 0 0 0 0 0 0 1")
+    rhs = create_array("800 0 0 0 0 1000 150")
+    cj = create_array("10 5 7 0 0 0 0 0 0 0")
+
+    simplex(A, cj, rhs, nvars=3, sense=1)
