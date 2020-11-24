@@ -1,26 +1,12 @@
+# -*- coding: utf-8 -*-
 #/usr/bin/env python3
 # _*_ coding: utf8 _*_
 
 import numpy as np
 np.set_printoptions(precision=4, suppress=True)
 
-def update():
-    zj = cb.dot(A)
-    profit = cj - zj
-    zvalue = cb.dot(r)
-    print(zvalue)
 
-def optimality_test():
-    if np.all(profit <= 0) and np.all(rhs >= 0):
-        print("Optimal Solution Found")
-    else:
-        print("Method Fails")
-
-
-def feasibility_test():
-    leaving = np.argmin(profit)
-
-def dual_simplex(M, coefobj, b, nvars):
+def simplex(M, coefobj, b, nvars, sense=1):
     """
     Dual Simplex Method
 
@@ -38,12 +24,16 @@ def dual_simplex(M, coefobj, b, nvars):
     nvars: int
         Number of decision variables. Don't take into account either slack variables of artificial variables.
 
+    sense: {+1, -1}
+        Sense of objective function, +1 for maximization problems, -1 for minimization problems
+
     """
     positions_basics = np.where(M[:, nvars: ] == 1)[1] + nvars  # get positions for initial  basic solutions. Only columns with number one
     solution_vector = np.zeros(coefobj.size)
     cb = coefobj[positions_basics].astype(np.float)
     iteration = 0
 
+    # for _ in range(5):
     while True:
         # update
         zj = cb.dot(M)
@@ -51,15 +41,17 @@ def dual_simplex(M, coefobj, b, nvars):
         zvalue = cb.dot(b)  # solutions is the rhs (right-hand side vector)
 
         # optimality_test
-        if np.all(profit <= 0) and np.all(b >= 0):
-            print("Optimal Solution Found")
-            print(solution_vector, zvalue)
+        print(f"solution: {solution_vector}")
+        if np.all(sense *  profit <= 0):
+            print("\nOptimal Solution Found")
             break
+
         # pivot
-        leaving_position = np.argmin(b)
-        leaving_row = np.where(A[leaving_position] >= 0, 1e-20, A[leaving_position])  # if there are zero or positive values
-        ratios = profit / leaving_row
-        entering_position = np.where(leaving_row <= 0, ratios, np.infty).argmin()
+        entering_position = np.argmax(sense * profit)
+        entering_column = np.where(M[:, entering_position] == 0, 1e-20, M[:, entering_position])   # elements of entering column
+        ratios = b /  entering_column
+        ratios = np.where((b == 0) | (entering_column < 0), np.infty, ratios)
+        leaving_position = ratios.argmin()
         cb[leaving_position] = coefobj[entering_position]  # update basic variable coefficients
 
         # Gauss-Jordan
@@ -83,21 +75,48 @@ def dual_simplex(M, coefobj, b, nvars):
         iteration += 1
 
         #
-        print(f"Iteration: {iteration}")
+        print(f"\nIteration: {iteration}")
+        print(f"Leaving: Variable {leaving_variable + 1},  Entering: Variable {entering_position + 1}")
         print(f"{M}")
+    print(f"{solution_vector} {zvalue}")
 
 
 
+def create_array(data):
+    "Create a matrix as numpy array from string data"
+    if ";" in data:
+        return np.array([row.split() for row in data.split(";")], dtype=np.float)
+    return np.array(data.strip().split(), dtype=np.float)
 
 
 if __name__ == "__main__":
-    # cj = np.array([-2,-2,-4,0,0,0], dtype=np.float)
-    # A = np.array([[-2,-3,-5,1,0,0], [3,1,7,0,1,0 ], [1,4,6,0,0,1] ], dtype=np.float)
-    # rhs = np.array([-2 , 3 , 5], dtype=np.float)
-
-    cj = np.array([-3,-2,0,0,0,0], dtype=np.float)
-    A = np.array([[-1,-1,1,0,0,0], [1,1,0,0,1,0 ], [-1,-2,0,0,1,0], [0,1,0,0,0,1] ], dtype=np.float)
-    rhs = np.array([-1, 7 , -10, 3], dtype=np.float)
 
 
-    dual_simplex(A, cj, rhs, nvars=2)
+
+
+    #minimize nvars=2
+    # cj = create_array("12 20 0 0 1000 1000" )
+    # A = create_array("6 8 -1 0 1 0; 7 12 0 -1 0 1")
+    # rhs = create_array("100 120")
+
+
+    # cj = create_array("3 4 0 0 0 0 -1000 -1000")
+    # A = create_array("5 4 1 0 0  0 0 0;3 5 0 1 0 0 0 0;5 4 0 0 -1 0 1 0;8 4 0 0 0 -1 0 1")
+    # rhs = create_array("200 150 100 80")
+
+    # max nvars=3
+    # cj = create_array("5 -4 3  0 0 -1000")
+    # A = create_array("2 1 -6 0 0 1; 6 5 10  1 0 0; 8 -3 6  0 1 0")
+    # rhs = create_array("20 76 50")
+
+    cj = create_array("2 3  0 -1000 0 0 0 0" )
+    A = create_array("\
+    1 1 1 0 0 0 0 0;\
+    0 1 0 1 0 0 0 -1;\
+    0 1 0 0 1 0 0 0;\
+    -1 1 0 0 0 1 0 0;\
+    1 0 0 0 0 0 1 0")
+    rhs = create_array("30 3 12 0 20")
+
+
+    simplex(A, cj, rhs, nvars=2, sense=1)
