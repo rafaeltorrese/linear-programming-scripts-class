@@ -22,12 +22,13 @@ def feasibility_test(A, rhs, net_evaluation, basics, cj , sense):
     ratios = np.full_like(rhs, np.infty)
 
     entry = np.argmax(sense * net_evaluation)
-
     entry_column = A[ : , entry]
+
     positive_values = np.where(entry_column > 0)[0] # if there exists zero values in key column
     ratios[positive_values] = rhs[positive_values] / entry_column[positive_values]
 
     leaving = np.argmin(ratios)
+
     basics[leaving] = cj[entry]  # update basic
     return entry, leaving, basics
 

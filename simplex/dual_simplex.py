@@ -4,21 +4,6 @@
 import numpy as np
 np.set_printoptions(precision=4, suppress=True)
 
-def update():
-    zj = cb.dot(A)
-    profit = cj - zj
-    zvalue = cb.dot(r)
-    print(zvalue)
-
-def optimality_test():
-    if np.all(profit <= 0) and np.all(rhs >= 0):
-        print("Optimal Solution Found")
-    else:
-        print("Method Fails")
-
-
-def feasibility_test():
-    leaving = np.argmin(profit)
 
 def dual_simplex(M, coefobj, b, nvars):
     """
@@ -55,11 +40,19 @@ def dual_simplex(M, coefobj, b, nvars):
             print("Optimal Solution Found")
             print(solution_vector, zvalue)
             break
+
+
         # pivot
+        ratios = np.full_like(coefobj, np.infty)  # same dimension for objective function
+
         leaving_position = np.argmin(b)
-        leaving_row = np.where(A[leaving_position] >= 0, 1e-20, A[leaving_position])  # if there are zero or positive values
-        ratios = profit / leaving_row
-        entering_position = np.where(leaving_row <= 0, ratios, np.infty).argmin()
+        leaving_row = A[leaving_position]
+
+        negative_values = A[leaving_position] < 0   # choose only negative values
+        ratios[negative_values]= profit[negative_values] / leaving_row[negative_values]
+
+        entering_position = ratios.argmin()
+
         cb[leaving_position] = coefobj[entering_position]  # update basic variable coefficients
 
         # Gauss-Jordan
@@ -69,7 +62,7 @@ def dual_simplex(M, coefobj, b, nvars):
             M[leaving_position] = M[leaving_position] / pivot_element
             b[leaving_position] = b[leaving_position] / pivot_element
         for i in range(num_rows):
-            if i == leaving_position:
+            if i == leaving_position:  # don't compute pivot row
                 continue
             factor = -M[i, entering_position]
             M[i, :] += factor * A[leaving_position]

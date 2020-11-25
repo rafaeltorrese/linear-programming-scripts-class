@@ -54,6 +54,7 @@ def simplex(M, coefobj, b, nvars, sense=1):
         ratios = np.full_like(cb, np.infty)
         entering_position = np.argmax(sense * profit)  # position of maximum value
 
+
         entering_column = M[:, entering_position].astype(float)
         positive_values = np.where(entering_column > 0)[0]
         ratios[positive_values] = b[positive_values] / entering_column[positive_values]
