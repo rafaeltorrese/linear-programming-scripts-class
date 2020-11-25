@@ -73,12 +73,12 @@ class ModelLP:
     def _standard_objective(self):
         "Returns coefficients from objective function, including slack or artificial variables"
         objective = self.getObjective
-        if (self._slack_matrix.size > 0):  # zero-values slack variables
-            objective = np.concatenate([objective, np.zeros_like(self._slacks)])  # create objective function with slacks variables
+        if (self.get_slack_matrix.size > 0):  # zero-values slack variables
+            objective = np.concatenate([objective, np.zeros_like(self.get_slack_matrix[1])])  # create objective function with slacks variables
         if (self._artificial_matrix.size > 0) and (self._sense == "max"):  # zero-values slack variables
-            objective = np.concatenate([objective, np.full(self._artificial_matrix.shape[1], -100000)])
+            objective = np.concatenate([objective, np.full(self.get_artificial_matrix.shape[1], -100000)])
         else:
-            objective = np.concatenate([objective, np.full(self._artificial_matrix.shape[1], 100000)])
+            objective = np.concatenate([objective, np.full(self.get_artificial_matrix.shape[1], 100000)])
         return objective
 
 
@@ -252,7 +252,8 @@ class ModelLP:
             print("Starting Phase I")
             cj = np.where((self._standard_objective() == -100000) | (self._standard_objective() == 100000), 1, 0)
             Cb = cj[position_basics]  # coefficients of basics
-            self._optimization_routine(M, Cb, cj, b, direction, labels, solution_vector, position_basics, iteration)
+            print(cj)
+            self._optimization_routine(M, Cb, cj, b, -1, labels, solution_vector, position_basics, iteration)
 
             print("Starting Phase II")
             cj = self._standard_objective()
@@ -338,11 +339,15 @@ if __name__ == "__main__":
     # model.load_instance("max 2 5; 1 4 <= 24; 3 1  <= 21; 1 1 <= 9")
     # model.simplex()
 
-    model = ModelLP("Example 2.17-1")
-    model.load_instance("min 12 20; 6 8 >= 100; 7 12 >= 120")
-    # model.show_standard_form
+    # model = ModelLP("Example 2.17-1")
+    # model.load_instance("min 12 20; 6 8 >= 100; 7 12 >= 120")
+
+    model = ModelLP("Example 2.17-7")
+    model.load_instance("max 5 -4  3;2 1 -6 = 20; 6 5 10 <= 76; 8 -3 6 <= 76")
+
+    model.show_standard_form
     # print(model.get_slack_matrix)
-    model.simplex(twophase=True)
+    # model.simplex(twophase=True)
 
 
 
