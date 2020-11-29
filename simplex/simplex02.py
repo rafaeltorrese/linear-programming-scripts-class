@@ -2,13 +2,15 @@
 #/usr/bin/env python3
 # _*_ coding: utf8 _*_
 
+import re
 import numpy as np
 np.set_printoptions(precision=4, suppress=True)
 
 
-def simplex(M, coefobj, b, nvars, sense=1):
+# def simplex(M, zfunction, b, nvars, sense=1):
+def simplex(M, zfunction, b, nvars):
     """
-    Dual Simplex Method
+    Simplex Method
 
     Parameters
     -------------
@@ -28,73 +30,92 @@ def simplex(M, coefobj, b, nvars, sense=1):
         Sense of objective function, +1 for maximization problems, -1 for minimization problems
 
     """
+    direction, coefobj = zfunction
+    if direction == "max":
+        sense = 1
+    else:
+        sense = -1
+
     M = M.astype(float)
     positions_basics = np.where(M[:, nvars: ] == 1)[1] + nvars  # get positions for initial  basic solutions. Only columns with number one
-    solution_vector = np.zeros(coefobj.size)
-    cb = coefobj[positions_basics].astype(np.float)
+    solution_vector = np.zeros_like(coefobj)
+
+
+
     iteration = 0
+    cb = coefobj[positions_basics].astype(np.float)
+    zj = cb.dot(M)
+    profit = coefobj - zj
+    non_optimal = np.any(sense * profit > 0)
 
+    while non_optimal:
+        iteration += 1
 
+        entering_variable = np.argmax(sense * profit)  # position of maximum value
+        entering_column = M[:, entering_variable]
 
-    while True:
-    # for _ in range(5):
-        # update
+        # positive_values = np.where(entering_column > 0)[0]
+        positive_values = entering_column > 0
+        print(f"Positive Values {positive_values}")
+        print(f"Column {entering_column}")
+        print(f"Right-hand side {b}")
 
+        ratios = np.full_like(cb, np.infty)
+        ratios[positive_values] = b[positive_values] / entering_column[positive_values]
+        print(f"ratios {ratios}")
+
+        leaving_row_index = ratios.argmin()
+
+        cb[leaving_row_index] = coefobj[entering_variable]  # update basic variable coefficients
+
+        leaving_variable = positions_basics[leaving_row_index]  # getting leaving_variable from position_basics
+
+        # Gauss-Jordan
+        print(f"\nIteration: {iteration}")
+        print(f"Leaving: Variable {leaving_variable + 1},  Entering: Variable {entering_variable + 1}")
+
+        pivot_element = M[leaving_row_index, entering_variable]
+        if pivot_element != 1:
+            M[leaving_row_index] = M[leaving_row_index] / pivot_element
+            b[leaving_row_index] = b[leaving_row_index] / pivot_element
+
+        rows = range(A.shape[0])
+        for i in rows:
+            if i == leaving_row_index:
+                continue
+            factor = -M[i, entering_variable]
+            M[i, :] += factor * M[leaving_row_index]  #  M[i, :] = -M[i, entering_variable] * M[leaving_row_index] + M[i, :]
+            b[i] += factor * b[leaving_row_index]  # update rhs row
+        #
+        # update values
         zj = cb.dot(M)
         profit = coefobj - zj
         zvalue = cb.dot(b)  # solutions is the rhs (right-hand side vector)
-
-        # optimality_test
-        # print(f"solution: {solution_vector}")
-        if np.all(sense *  profit <= 0):
-            print("\nOptimal Solution Found")
-            break
-
-        # pivot
-        ratios = np.full_like(cb, np.infty)
-        entering_position = np.argmax(sense * profit)  # position of maximum value
-
-
-        entering_column = M[:, entering_position].astype(float)
-        positive_values = np.where(entering_column > 0)[0]
-        ratios[positive_values] = b[positive_values] / entering_column[positive_values]
-
-        leaving_position = ratios.argmin()
-        cb[leaving_position] = coefobj[entering_position]  # update basic variable coefficients
-
-        # Gauss-Jordan
-        num_rows = M.shape[0]
-        pivot_element = M[leaving_position, entering_position]
-        if pivot_element != 1:
-            M[leaving_position] = M[leaving_position] / pivot_element
-            b[leaving_position] = b[leaving_position] / pivot_element
-        for i in range(num_rows):
-            if i == leaving_position:
-                continue
-            factor = -M[i, entering_position]
-            M[i, :] += factor * A[leaving_position]  #  M[i, :] = -M[i, entering_position] * A[leaving_position] + M[i, :]
-            b[i] += factor * b[leaving_position]  # update rhs row
-
         #
-        leaving_variable = positions_basics[leaving_position]  # getting leaving_variable from position_basics
-        positions_basics[leaving_position] = entering_position
+        positions_basics[leaving_row_index] = entering_variable
         solution_vector[leaving_variable] = 0
         solution_vector[positions_basics] = b
-        iteration += 1
-
         #
-        print(f"\nIteration: {iteration}")
-        print(f"Leaving: Variable {leaving_variable + 1},  Entering: Variable {entering_position + 1}")
-        print(f"{M}")
+        non_optimal = np.any(sense * profit > 0)
+        #
+        print(f"{M}.\n zvalule: {zvalue}")
+        #
     print(f"{solution_vector} {zvalue}")
 
 
+
+
+def objective(expression):
+    string_elements = expression.strip()
+    sense = re.search("[Mm](ax|in)", string_elements)
+    return (sense.group(), np.array(string_elements.split()[1:], dtype=np.float))
 
 def create_array(data):
     "Create a matrix as numpy array from string data"
     if ";" in data:
         return np.array([row.split() for row in data.split(";")], dtype=np.float)
-    return np.array(data.strip().split(), dtype=np.float)
+    return np.array(data.strip().split(), dtype=np.float64)
+
 
 
 if __name__ == "__main__":
@@ -134,6 +155,8 @@ if __name__ == "__main__":
     #max nvar=3
     A = create_array("1 1 1 1 0 0 0 0 0 0; -1 3 0 0 1 0 0 0 0 0; 1 -3 0 0 0 1 0 0 0 0; 0 2 -1 0 0 0 1 0 0 0; 0 -2 1 0 0 0 0 1 0 0; 0 1 0 0 0 0 0 0 1 0; 1 0 0 0 0 0 0 0 0 1")
     rhs = create_array("800 0 0 0 0 1000 150")
-    cj = create_array("10 5 7 0 0 0 0 0 0 0")
+    cj = objective("max 10 5 7 0 0 0 0 0 0 0")
 
-    simplex(A, cj, rhs, nvars=3, sense=1)
+
+    # simplex(A, c2, rhs, nvars=3, sense=1)
+    simplex(A, cj, rhs, nvars=3)

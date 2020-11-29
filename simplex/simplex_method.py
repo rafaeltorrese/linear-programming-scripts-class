@@ -232,15 +232,22 @@ if __name__ == "__main__":
     # A = create_array("4 6 3 1 0 0 0; 3 -6 -4 0 1 0 0; 2 3 -5 0 0 -1 1")
     # rhs = create_array("8 1 4")
 
-    # # Max nvars=3
+    # Max nvars=3
     # cj = create_array("5 -4 3 0 0 0 -1000")
     # A = create_array("2 1 -6 0 0 0 1; 6 5 10 0 1 0 0; 8 -3 6 0 0 1 0")
     # rhs = create_array("20 76 50")
 
-    # #max nvar=3
-    A = create_array("1 1 1 1 0 0 0 0 0 0; -1 3 0 0 1 0 0 0 0 0; 1 -3 0 0 0 1 0 0 0 0; 0 2 -1 0 0 0 1 0 0 0; 0 -2 1 0 0 0 0 1 0 0; 0 1 0 0 0 0 0 0 1 0; 1 0 0 0 0 0 0 0 0 1")
-    rhs = create_array("800 0 0 0 0 1000 150")
-    cj = create_array("10 5 7 0 0 0 0 0 0 0")
 
-    body, solution, zvalue, vector = simplex(A, cj, rhs, nvars=3, direction=1)
+    # #max nvar=3
+    # A = create_array("1 1 1 1 0 0 0 0 0 0; -1 3 0 0 1 0 0 0 0 0; 1 -3 0 0 0 1 0 0 0 0; 0 2 -1 0 0 0 1 0 0 0; 0 -2 1 0 0 0 0 1 0 0; 0 1 0 0 0 0 0 0 1 0; 1 0 0 0 0 0 0 0 0 1")
+    # rhs = create_array("800 0 0 0 0 1000 150")
+    # cj = create_array("10 5 7 0 0 0 0 0 0 0")
+
+
+
+# #max nvar=2
+    A = create_array("4 2 1 0 0; 2.5 0.6 0 1 0; 1 2 0 0 1")
+    rhs = create_array("2000 1500 600")
+    cj = create_array("25 45 0 0 0")
+    body, solution, zvalue, vector = simplex(A, cj, rhs, nvars=2, direction=1)
 
