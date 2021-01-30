@@ -79,11 +79,10 @@ def simplex(M, c, r, nvars, direction=1):
     num_slacks = slacks.size
     num_artificials = len(c[nvars+num_slacks:])
     #
-    x_labels = ["x"+str(i) for i in range(1,nvars+1)]
-    slack_lables = ["S"+str(i+1) for i in slacks]
+    x_labels = ["X"+str(i) for i in range(1,nvars+1)]
+    slack_lables = ["S"+str(i+1) for i in range(num_slacks)]
     artificial_labels = ["A"+str(i+1) for i in range(num_artificials)]
     labels = x_labels + slack_lables + artificial_labels
-    print(labels)
     #
     basics = c[positions].astype(float)  # creates a copy of basis values
     optimal = False
@@ -91,23 +90,23 @@ def simplex(M, c, r, nvars, direction=1):
     while not optimal:
         # Update
         zj, net, objvalue = update(M, r, c, basics)
+        print(dict(zip(labels, solution_vector)), objvalue, "\n")
         # Optimality
         optimal = optimality_test(net, direction)
         # 
         if optimal:
-            print(dict(zip(labels, solution_vector)), objvalue, "\n")
             break
         # Feasibility
         entry, leaving, basics = feasibility_test(M, r, net, basics, c, direction)
         variable_leaving = positions[leaving]   # only for tracking position variable ("x1, x2, ... , etc")
         positions[leaving] = entry
+        iteration += 1
+        print(f'Iteration: {iteration}')
+        print(f"Leaving: {labels[variable_leaving]},  Entering: {labels[entry]}")
         M, r = row_operations(M, r, entry, leaving)  # Gauss Jordan
         #
-        iteration += 1
         solution_vector[positions] = rhs
         solution_vector[variable_leaving] = 0
-        print(f'Iteration: {iteration}')
-        print(f"Leaving: Variable {variable_leaving + 1},  Entering: Variable {entry + 1}")
         print(M, "\n")
     return A, rhs, objvalue, solution_vector
 
@@ -142,22 +141,20 @@ def two_phase(M, c, r, nvars, direction=1):
     num_slacks = slacks.size
     num_artificials = len(c[nvars+num_slacks:])
     #
-    x_labels = ["x"+str(i) for i in range(1,nvars+1)]
-    slack_lables = ["S"+str(i+1) for i in slacks]
+    x_labels = ["X"+str(i) for i in range(1,nvars+1)]
+    slack_lables = ["S"+str(i+1) for i in range(num_slacks)]
     artificial_labels = ["A"+str(i+1) for i in range(num_artificials)]
     labels = x_labels + slack_lables + artificial_labels
-    print(labels)
     optimal = False
     iteration = 0
     print("="*20 + " Starting Phase I " + "="*20 )
     while not optimal:
         # Update
         zj, net, objvalue = update(M, r, two_phase_objective, basics)
+        print(dict(zip(labels,solution_vector)), objvalue, "\n")
         # Optimality
         optimal = optimality_test(net, -1)
-        # print(solution_vector, objvalue, "\n")
         if optimal:
-            print(dict(zip(labels,solution_vector)), objvalue, "\n")
             break
         # Feasibility
         entry, leaving, basics = feasibility_test(M, r, net, basics, two_phase_objective, -1)
@@ -165,12 +162,13 @@ def two_phase(M, c, r, nvars, direction=1):
         positions[leaving] = entry
         iteration += 1
         print(f'Iteration: {iteration}')
-        print(f"Leaving: Variable {labels[variable_leaving]},  Entering: Variable {labels[entry]}")
+        print(f"Leaving: {labels[variable_leaving]},  Entering: {labels[entry]}")
         M, r = row_operations(M, r, entry, leaving)  # Gauss Jordan
         #
         solution_vector[positions] = r
         solution_vector[variable_leaving] = 0
         print(M, "\n")
+        
     #
     #
     print(20*"=" + " Starting Phase II " + 20*"=")
@@ -179,11 +177,11 @@ def two_phase(M, c, r, nvars, direction=1):
     while not optimal:
         # Update
         zj, net, objvalue = update(M, r, c, basics)
+        print(dict(zip(labels,solution_vector)), objvalue, "\n")        
         # Optimality
         optimal = optimality_test(net, direction)
         # 
         if optimal:
-            print(dict(zip(labels,solution_vector)), objvalue, "\n")
             break
         # Feasibility
         entry, leaving, basics = feasibility_test(M, r, net, basics, c, direction)
@@ -192,7 +190,7 @@ def two_phase(M, c, r, nvars, direction=1):
         
         iteration += 1
         print(f'Iteration: {iteration}')
-        print(f"Leaving: Variable {labels[variable_leaving]},  Entering: Variable {labels[entry]}")
+        print(f"Leaving: {labels[variable_leaving]},  Entering: {labels[entry]}")
         
         M, r = row_operations(M, r, entry, leaving)  # Gauss Jordan
         #
@@ -200,6 +198,7 @@ def two_phase(M, c, r, nvars, direction=1):
         solution_vector[variable_leaving] = 0
         
         print(M, "\n")
+        
     return A, rhs, objvalue, solution_vector
 
 if __name__ == "__main__":
@@ -230,6 +229,7 @@ if __name__ == "__main__":
     # A = create_array("1 1 1 1 0 0; 3 1 2 0 1 0; 1 0 0 0 0 1")
     # rhs = create_array("800 1000 150")
 
+    # nvar max example 2.9-3 gupta
     # cj = create_array("2 1 0 0 0 0")
     # A = create_array("1	2 1 0 0 0;1 1 0 1 0 0; 1 -1 0 0 1 0; 1 -2 0	0 0 1")
     # rhs = create_array("10 6 2 1")
@@ -243,14 +243,15 @@ if __name__ == "__main__":
     # A = create_array("2 1 1 0 0 0; 1 3 0 -1 0 1; 0 1 0 0 1 0")
     # rhs = create_array("2 3 4")
 
-    # cj = create_array("2 3  0 -1000 0 0 0 0" )
-    # A = create_array("\
-    # 1 1 1 0 0 0 0 0;\
-    # 0 1 0 1 0 0 0 -1;\
-    # 0 1 0 0 1 0 0 0;\
-    # -1 1 0 0 0 1 0 0;\
-    # 1 0 0 0 0 0 1 0")
-    # rhs = create_array("30 3 12 0 20")
+    # nvar=2 max example 2.9-2
+    cj = create_array("2 3  0 -1000 0 0 0 0" )
+    A = create_array("\
+    1 1 1 0 0 0 0 0;\
+    0 1 0 1 0 0 0 -1;\
+    0 1 0 0 1 0 0 0;\
+    -1 1 0 0 0 1 0 0;\
+    1 0 0 0 0 0 1 0")
+    rhs = create_array("30 3 12 0 20")
 
     # nvar=2 maximization
     # cj = create_array("3 4 0 0 0 0 -1000 -1000")
@@ -262,9 +263,9 @@ if __name__ == "__main__":
     # rhs = create_array("8 1 4")
 
     # Max nvars=3
-    cj = create_array("5 -4 3 0 0 0 -1000")
-    A = create_array("2 1 -6 0 0 0 1; 6 5 10 0 1 0 0; 8 -3 6 0 0 1 0")
-    rhs = create_array("20 76 50")
+    # cj = create_array("5 -4 3 0 0 0 -1000")
+    # A = create_array("2 1 -6 0 0 0 1; 6 5 10 0 1 0 0; 8 -3 6 0 0 1 0")
+    # rhs = create_array("20 76 50")
 
 
     # #max nvar=3
@@ -279,5 +280,5 @@ if __name__ == "__main__":
     # rhs = create_array("2000 1500 600")
     # cj = create_array("25 45 0 0 0")
     
-    body, solution, zvalue, vector = two_phase(A, cj, rhs, nvars=3, direction=1)
+    body, solution, zvalue, vector = simplex(A, cj, rhs, nvars=2, direction=1)
 
