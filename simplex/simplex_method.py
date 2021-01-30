@@ -19,8 +19,7 @@ def optimality_test(net_evaluation, sense):
     return optimal
 
 def feasibility_test(A, rhs, net_evaluation, basics, cj , sense):
-    ratios = np.full_like(rhs, np.infty)
-
+    ratios = np.full(rhs.size, np.inf)  # size of Cb with infinite expressions 
     entry = np.argmax(sense * net_evaluation)
     entry_column = A[ : , entry]
 
@@ -75,7 +74,7 @@ def simplex(M, c, r, nvars, direction=1):
     # initilization
     positions = np.where(M[ : , nvars:] == 1)[1] + nvars # only positions of columns with values equal to one
     solution_vector = np.zeros(c.size)  # [0, 0 ,0 , .. , 0]
-    basics = c[positions].astype(float)  # creates a copy
+    basics = c[positions].astype(float)  # creates a copy of basis values
     optimal = False
     iteration = 0
     while not optimal:
@@ -128,6 +127,7 @@ def two_phase(M, c, r, nvars, direction=1):
     basics = two_phase_objective[positions].astype(float)  # creates a copy
     optimal = False
     iteration = 0
+    print("="*10 + "Starting Phase I" + "="*10 )
     while not optimal:
         # Update
         zj, net, objvalue = update(M, r, two_phase_objective, basics)
@@ -224,9 +224,10 @@ if __name__ == "__main__":
     # 1 0 0 0 0 0 1 0")
     # rhs = create_array("30 3 12 0 20")
 
-    # cj = create_array("3 4 0 0 0 0 -1000 -1000")
-    # A = create_array("5 4 1 0 0  0 0 0;3 5 0 1 0 0 0 0;5 4 0 0 -1 0 1 0;8 4 0 0 0 -1 0 1")
-    # rhs = create_array("200 150 100 80")
+    # nvar=2 maximization
+    cj = create_array("3 4 0 0 0 0 -1000 -1000")
+    A = create_array("5 4 1 0 0  0 0 0;3 5 0 1 0 0 0 0;5 4 0 0 -1 0 1 0;8 4 0 0 0 -1 0 1")
+    rhs = create_array("200 150 100 80")
 
     # cj = create_array("2  1 0.25 0 0 0 -1000")
     # A = create_array("4 6 3 1 0 0 0; 3 -6 -4 0 1 0 0; 2 3 -5 0 0 -1 1")
@@ -246,8 +247,8 @@ if __name__ == "__main__":
 
 
 # #max nvar=2
-    A = create_array("4 2 1 0 0; 2.5 0.6 0 1 0; 1 2 0 0 1")
-    rhs = create_array("2000 1500 600")
-    cj = create_array("25 45 0 0 0")
-    body, solution, zvalue, vector = simplex(A, cj, rhs, nvars=2, direction=1)
+    # A = create_array("4 2 1 0 0; 2.5 0.6 0 1 0; 1 2 0 0 1")
+    # rhs = create_array("2000 1500 600")
+    # cj = create_array("25 45 0 0 0")
+    body, solution, zvalue, vector = two_phase(A, cj, rhs, nvars=2, direction=1)
 

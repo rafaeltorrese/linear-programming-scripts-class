@@ -40,21 +40,31 @@ def dual_simplex(M, coefobj, b, nvars):
             print("Optimal Solution Found")
             print(solution_vector, zvalue)
             break
-
+        elif np.any(profit > 0):
+            print("Method Fails")
+            print("Net Evaluation Row has at least a positive value")
+            print(profit)
+            break
+        else:
+            iteration += 1
+            print(f"Next Iteration: {iteration}")
 
         # pivot
-        ratios = np.full_like(coefobj, np.infty)  # same dimension for objective function
+        ratios = np.full(coefobj.size, np.inf)  # same dimension for objective function 
+        # ratios = np.full_like(coefobj, 1000000)  # same dimension for objective function
 
         leaving_position = np.argmin(b)
         leaving_row = A[leaving_position]
-
         negative_values = A[leaving_position] < 0   # choose only negative values
+        
         ratios[negative_values]= profit[negative_values] / leaving_row[negative_values]
-
+        
         entering_position = ratios.argmin()
-
         cb[leaving_position] = coefobj[entering_position]  # update basic variable coefficients
-
+        leaving_variable = positions_basics[leaving_position]  # getting leaving_variable from position_basics
+        positions_basics[leaving_position] = entering_position
+        solution_vector[leaving_variable] = 0
+        
         # Gauss-Jordan
         num_rows = M.shape[0]
         pivot_element = M[leaving_position, entering_position]
@@ -67,16 +77,9 @@ def dual_simplex(M, coefobj, b, nvars):
             factor = -M[i, entering_position]
             M[i, :] += factor * A[leaving_position]
             b[i] += factor * b[leaving_position]  # update rhs row
-
-        #
-        leaving_variable = positions_basics[leaving_position]  # getting leaving_variable from position_basics
-        positions_basics[leaving_position] = entering_position
-        solution_vector[leaving_variable] = 0
         solution_vector[positions_basics] = b
-        iteration += 1
-
         #
-        print(f"Iteration: {iteration}")
+        print(f"Entering: {entering_position}, Leaving: {leaving_variable}")
         print(f"{M}")
 
 

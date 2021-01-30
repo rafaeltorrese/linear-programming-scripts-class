@@ -3,6 +3,7 @@
 import re
 from itertools import combinations
 import numpy as np
+
 np.set_printoptions(precision=4, suppress=True)
 
 
@@ -181,25 +182,18 @@ class ModelLP:
             Zj = Cb.dot(M)
             profit = cj - Zj
             Z = Cb.dot(b)
-
             if np.all(direction * profit <= 0):
                 print(f"\nOptimal Solution found \n Matrix:\n{M}\n\n Zvalue: {Z}\n")
                 print(dict(zip(labels, solution_vector)))
                 break
 
             # entering and leaving variables
-            ratios = np.full_like(Cb, np.infty)
-
+            ratios = np.full(Cb.size, np.inf)  # size of Cb with infinite expressions 
             position_of_entering_variable = np.argmax(direction * profit)  # position of maximum value
-
             entering_column = M[: , position_of_entering_variable]
             positive_column_values = entering_column > 0
-
             ratios[positive_column_values] = b[positive_column_values] / entering_column[positive_column_values]
-            print(ratios)
-
             position_of_leaving_variable = ratios.argmin()
-
             Cb[position_of_leaving_variable] = cj[position_of_entering_variable]  # update basic variable coefficients
 
             #Gauss-Jordan
@@ -214,7 +208,6 @@ class ModelLP:
                 M[i] += target_zero_element * M[position_of_leaving_variable]
                 b[i] += target_zero_element * b[position_of_leaving_variable]
 
-
             leaving_variable = position_basics[position_of_leaving_variable]
             position_basics[position_of_leaving_variable] = position_of_entering_variable
 
@@ -224,7 +217,9 @@ class ModelLP:
             iteration += 1
 
             print(f"Iteration: {iteration}")
-            print(f"Entering Variable: {position_of_entering_variable + 1}, Leaving Variable: {leaving_variable + 1}")
+            # print(f"Entering Variable: {position_of_entering_variable + 1}, Leaving Variable: {leaving_variable + 1}")
+            # print(labels[position_of_entering_variable])
+            print(f"Entering Variable: {labels[position_of_entering_variable]}, Leaving Variable: {labels[leaving_variable]}")
             print(M)
 
     def simplex(self, twophase=False):
@@ -237,32 +232,33 @@ class ModelLP:
         M = self.set_matrix_form()
 
         slacks = self._slack_matrix
-
         num_vars = self._objective.size
         num_slacks = slacks.shape[1]  # number of columns
-        label_xvars = ["".join(["x",str(x + 1)]) for x in range(num_vars)]
-        label_slacks = ["".join(["s",str(s + 1)]) for s in range(num_slacks)]
+        # num_slacks = self.num_slacks
+        num_artificials = self.get_artificial_matrix.shape[1]  # number of columns
+        label_xvars = ["".join(["x", str(x + 1)]) for x in range(num_vars)]
+        label_slacks = ["".join(["s", str(s + 1)]) for s in range(num_slacks)]
+        label_artificials = ["".join(["A", str(a + 1)]) for a in range(num_artificials)]
 
-        labels = label_xvars + label_slacks
+        labels = label_xvars + label_slacks + label_artificials
+        print(labels)
         position_basics =np.where(M[ :,  num_vars: ] == 1)[1] + num_vars
         solution_vector = np.zeros(M.shape[1])  # number of columns
 
         iteration = 0
         if twophase:
-            print("Starting Phase I")
+            print("="*10 + "Starting Phase I" + "="*10)
             cj = np.where((self._standard_objective() == -100000) | (self._standard_objective() == 100000), 1, 0)
             Cb = cj[position_basics]  # coefficients of basics
-            print(cj)
             self._optimization_routine(M, Cb, cj, b, -1, labels, solution_vector, position_basics, iteration)
-
-            print("Starting Phase II")
+            
+            print("\nStarting Phase II")
             cj = self._standard_objective()
             Cb = cj[position_basics]  # coefficients of basics
             self._optimization_routine(M, Cb, cj, b, direction, labels, solution_vector, position_basics, iteration)
         else:
             cj = self._standard_objective()
             Cb = cj[position_basics]  # coefficients of basics
-
             self._optimization_routine(M, Cb, cj, b, direction, labels, solution_vector, position_basics, iteration)
 
 
@@ -347,7 +343,7 @@ if __name__ == "__main__":
 
     model.show_standard_form
     # print(model.get_slack_matrix)
-    # model.simplex(twophase=True)
+    model.simplex(twophase=True)
 
 
 
