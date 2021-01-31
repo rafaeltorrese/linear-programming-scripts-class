@@ -44,7 +44,16 @@ def simplex(M, zfunction, b, nvars):
     zj = cb.dot(M)
     profit = coefobj - zj
     non_optimal = np.any(sense * profit > 0)
-
+    #
+    slacks = np.where(coefobj[nvars:] == 0)[0]
+    num_slacks = slacks.size
+    num_artificials = len(coefobj[nvars+num_slacks:])
+    #
+    x_labels = ["X"+str(i) for i in range(1,nvars+1)]
+    slack_lables = ["S"+str(i+1) for i in range(num_slacks)]
+    artificial_labels = ["A"+str(i+1) for i in range(num_artificials)]
+    labels = x_labels + slack_lables + artificial_labels
+    
     while non_optimal:
         iteration += 1
         entering_variable = np.argmax(sense * profit)  # position of maximum value
@@ -52,23 +61,15 @@ def simplex(M, zfunction, b, nvars):
 
         # positive_values = np.where(entering_column > 0)[0]
         positive_values = entering_column > 0
-        print(f"Positive Values {positive_values}")
-        print(f"Column {entering_column}")
-        print(f"Right-hand side {b}")
-
         ratios = np.full(cb.size, np.inf)  # size of Cb with infinite expressions 
         ratios[positive_values] = b[positive_values] / entering_column[positive_values]
-        print(f"ratios {ratios}")
-
         leaving_row_index = ratios.argmin()
-
         cb[leaving_row_index] = coefobj[entering_variable]  # update basic variable coefficients
-
         leaving_variable = positions_basics[leaving_row_index]  # getting leaving_variable from position_basics
 
         # Gauss-Jordan
         print(f"\nIteration: {iteration}")
-        print(f"Leaving: Variable {leaving_variable + 1},  Entering: Variable {entering_variable + 1}")
+        print(f"Leaving: {labels[leaving_variable]},  Entering: {labels[entering_variable ]}")
 
         pivot_element = M[leaving_row_index, entering_variable]
         if pivot_element != 1:
@@ -94,11 +95,9 @@ def simplex(M, zfunction, b, nvars):
         #
         non_optimal = np.any(sense * profit > 0)
         #
-        print(f"{M}.\n zvalue: {zvalue}")
+        print(f"{M}.\n {dict(zip(labels,solution_vector))} Z: {zvalue}")
         #
-    print(f"{solution_vector} {zvalue}")
-
-
+    # print(f"{solution_vector} {zvalue}")
 
 
 def objective(expression):

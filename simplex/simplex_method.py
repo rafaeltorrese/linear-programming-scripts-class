@@ -244,14 +244,14 @@ if __name__ == "__main__":
     # rhs = create_array("2 3 4")
 
     # nvar=2 max example 2.9-2
-    cj = create_array("2 3  0 -1000 0 0 0 0" )
-    A = create_array("\
-    1 1 1 0 0 0 0 0;\
-    0 1 0 1 0 0 0 -1;\
-    0 1 0 0 1 0 0 0;\
-    -1 1 0 0 0 1 0 0;\
-    1 0 0 0 0 0 1 0")
-    rhs = create_array("30 3 12 0 20")
+    # cj = create_array("2 3  0 -1000 0 0 0 0" )
+    # A = create_array("\
+    # 1 1 1 0 0 0 0 0;\
+    # 0 1 0 1 0 0 0 -1;\
+    # 0 1 0 0 1 0 0 0;\
+    # -1 1 0 0 0 1 0 0;\
+    # 1 0 0 0 0 0 1 0")
+    # rhs = create_array("30 3 12 0 20")
 
     # nvar=2 maximization
     # cj = create_array("3 4 0 0 0 0 -1000 -1000")
@@ -280,5 +280,9 @@ if __name__ == "__main__":
     # rhs = create_array("2000 1500 600")
     # cj = create_array("25 45 0 0 0")
     
-    body, solution, zvalue, vector = simplex(A, cj, rhs, nvars=2, direction=1)
+    #max nvar=2
+    A = create_array("1500 1500 -1 0 0 1 0 0; 3000 1000 0 -1 0 0 1 0;2000 5000 0 0 -1 0 0 1")
+    rhs = create_array("20000 40000 44000")
+    cj = create_array("600 400 0 0 0 1000 1000 1000")
+    body, solution, zvalue, vector = two_phase(A, cj, rhs, nvars=2, direction=-1)
 

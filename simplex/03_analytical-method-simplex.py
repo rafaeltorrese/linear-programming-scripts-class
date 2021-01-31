@@ -13,13 +13,13 @@ class Constraint:
         self._expression = expression
 
     def vector(self):
-        'Construct vector from string constraint'
+        'Construct vector from a string constraint'
         vars, rhs =  re.split("[<>]?=", self._expression)
         return [float(element) for element in vars.split()], float(rhs)
 
     def slack(self):
-        sense = re.search("[<>]?=", self._expression)[0]
-        if sense == '<=':
+        sense = re.search("[<>]?=", self._expression)
+        if sense.group() == '<=':
             return 1
         elif sense == '>=':
             return -1
@@ -28,7 +28,7 @@ class Constraint:
 
     def artificial(self):
         slack = self.slack()
-        if slack <= 0:
+        if slack in {-1,0}:
             return 1
         else:
             return 0
@@ -99,7 +99,7 @@ class ModelLP:
         # self._num_const += 1
         is_objective = re.match("^m(ax*|in*)", expression.lstrip())  # match min or max
         if is_objective:
-            self._setObjective(expression.strip())
+            self._setObjective(expression)
         else:
             constr = Constraint(expression.strip())  # Constraint Class
             self._bodycoeff.append(constr.component("body"))
